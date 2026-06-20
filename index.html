@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+ <head><script src="/_sdk/telemetry_sdk.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vet AI Chat</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&amp;display=swap" rel="stylesheet">
+  <style>
+    @keyframes bounce {
+    0%,80%,100% { transform: scale(0); }
+    40% { transform: scale(1); }
+}
+.float-icon {
+    animation: floating 3s ease-in-out infinite;
+}
+
+@keyframes floating {
+    0% {
+        transform: translateY(0px);
+    }
+    50% {
+        transform: translateY(-8px);
+    }
+    100% {
+        transform: translateY(0px);
+    }
+}
+
+.message-pop {
+    animation: popIn 0.3s ease;
+}
+
+@keyframes popIn {
+    from {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+        body {
+    font-family: 'DM Sans', sans-serif;
+    background: linear-gradient(-45deg, #d4fc79, #96e6a1, #84fab0, #8fd3f4);
+    background-size: 400% 400%;
+    animation: gradientBG 12s ease infinite;
+}@keyframes gradientBG {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+        .chat-area { height: calc(100 * min(var(--vh, 1vh), 1vh) - 140px); }
+        .typing-dot { animation: bounce 1.4s infinite ease-in-out both; }
+        .typing-dot:nth-child(2) { animation-delay: 0.16s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.32s; }
+        @keyframes bounce { 0%,80%,100% { transform: scale(0); } 40% { transform: scale(1); } }
+    </style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+  <script src="/_sdk/resizing_sdk.js" type="text/javascript"></script>
+ </head>
+ <body data-template-id="__page-root" class="w-full min-h-screen flex flex-col">
+  <header class="px-5 py-4 flex items-center gap-3 border-b backdrop-blur-md bg-white/30 shadow-lg">
+   <div class="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center"><span class="text-2xl animate-pulse">🐾</span>
+   </div>
+   <div>
+    <h1 class="font-extrabold text-3xl text-emerald-800 tracking-wide">
+    Vet AI 
+</h1>
+    <p data-template-id="app-subtitle" class="canva-text text-sm opacity-70"></p>
+   </div>
+  </header>
+  <main id="chat-area"
+class="chat-area flex-1 overflow-y-auto px-4 py-4 space-y-3 bg-white/20 backdrop-blur-md rounded-xl m-3 shadow-xl">
+   <div class="flex justify-start">
+    <div data-template-id="welcome-msg" class="canva-card max-w-[80%] px-4 py-3 rounded-2xl rounded-bl-sm text-sm"></div>
+   </div>
+  </main>
+  <form id="chat-form" class="px-4 py-3 border-t border-gray-100 flex gap-2 items-center"><input data-template-id="chat-input" id="msg-input" type="text" class="canva-input flex-1 px-4 py-2.5 rounded-full border border-gray-200 outline-none focus:border-emerald-400 text-sm" autocomplete="off"> <button data-template-id="send-button" type="submit"
+class="canva-button w-12 h-12 rounded-full flex items-center justify-center shrink-0 bg-emerald-600 text-white hover:scale-110 transition-all duration-300 shadow-lg"><i data-lucide="send" style="width:18px;height:18px;"></i> </button>
+  </form>
+  <script src="/_sdk/editing_sdk.js"></script>
+  <script>
+        lucide.createIcons();
+        const chatArea = document.getElementById('chat-area');
+        const form = document.getElementById('chat-form');
+        const input = document.getElementById('msg-input');
+
+        function addBubble(text, isUser) {
+            const wrapper = document.createElement('div');
+            wrapper.className = `flex ${isUser ? 'justify-end' : 'justify-start'}`;
+            const bubble = document.createElement('div');
+            bubble.className = `max-w-[80%] px-4 py-3 rounded-2xl text-sm whitespace-pre-wrap ${isUser ? 'bg-emerald-600 text-white rounded-br-sm' : 'bg-gray-100 text-gray-800 rounded-bl-sm'}`;
+            bubble.textContent = text;
+            wrapper.appendChild(bubble);
+            chatArea.appendChild(wrapper);
+            chatArea.scrollTop = chatArea.scrollHeight;
+            return bubble;
+        }
+
+        function showTyping() {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'flex justify-start';
+            wrapper.id = 'typing-indicator';
+            wrapper.innerHTML = `<div class="bg-gray-100 px-4 py-3 rounded-2xl rounded-bl-sm flex gap-1 items-center"><span class="typing-dot w-2 h-2 bg-gray-400 rounded-full inline-block"></span><span class="typing-dot w-2 h-2 bg-gray-400 rounded-full inline-block"></span><span class="typing-dot w-2 h-2 bg-gray-400 rounded-full inline-block"></span></div>`;
+            chatArea.appendChild(wrapper);
+            chatArea.scrollTop = chatArea.scrollHeight;
+        }
+
+        function removeTyping() {
+            const el = document.getElementById('typing-indicator');
+            if (el) el.remove();
+        }
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const msg = input.value.trim();
+            if (!msg) return;
+            input.value = '';
+            addBubble(msg, true);
+            showTyping();
+
+            try {
+               const res = await fetch('http://127.0.0.1:5000/chat', {
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+        message: msg
+    })
+});
+
+const data = await res.json();
+
+                removeTyping();
+                if (!res.ok) throw new Error('Server error');
+                //const data = await res.json();
+                addBubble(data.response || 'No response received.', false);
+            } catch (err) {
+                removeTyping();
+                addBubble('⚠️ Could not connect to Ollama. Make sure it\'s running on localhost:11434.', false);
+            }
+        });
+    </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a0ec577282798b91',t:'MTc4MTk3NDk1MS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
