@@ -14,7 +14,7 @@ def chat():
         "http://localhost:11434/api/generate",
         json={
             "model": "llama3",
-            "prompt": f"You are a veterinary doctor. Answer clearly.\nUser: {user_message}",
+            "prompt": f"You are a veterinary doctor. Answer clearly in easy language.\nUser: {user_message}",
             "stream": False
         }
     )
