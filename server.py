@@ -1,4 +1,4 @@
-from click import prompt
+
 
 from flask import Flask, request, jsonify
 from flask_cors import CORS
@@ -17,9 +17,11 @@ def chat():
         json={
             #"model": "llama3",-----------------> I CHANGE THIS MODEL BECAUSE THE 7B MODEL IS TOO HEAVY FOR MY GPU, I USE THE 3B MODEL INSTEAD
             "model": "llama3.2:3b",  
-            "prompt": prompt,
-            #"prompt": f"You are a veterinary doctor. Answer clearly in easy language. Also prescribe medication if necessary.\nUser: {user_message}",
-            "stream": False
+            "prompt": f"You are a veterinary doctor. Answer clearly in easy language. Also prescribe medication if necessary.\nUser: {user_message}",
+            "stream": True,
+            "options": {
+              "num_predict": 150
+            }
         }
     )
 
